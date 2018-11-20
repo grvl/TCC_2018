@@ -1,0 +1,7 @@
+dados/
+*.Rdata
+
+.DS_Store
+
+erros.txt
+importacao.sql

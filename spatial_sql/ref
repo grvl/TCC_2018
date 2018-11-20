@@ -1,0 +1,178 @@
+https://blogs.msdn.microsoft.com/sqlserverstorageengine/2016/01/05/loading-geojson-data-into-sql-server/
+OPENJSON
+
+
+
+ ogr2ogr -f "PostgreSQL" PG:"dbname=IBGE user=lima" "free_wheels/scripts/python/data/bus_line_geo.json" -nln bus_line -append
+
+ogr2ogr.exe -f "PostgreSQL" PG:"dbname=my_database user=postgres" "source_data.shp" -skip-failures
+
+----
+
+https://postgis.net/docs/manual-2.4/RT_reference.html
+
+4.7.2. Examples of Spatial SQL
+
+The examples in this section will make use of two tables, a table of linear roads, and a table of polygonal municipality boundaries. The table definitions for the bc_roads table is:
+
+Column      | Type              | Description
+------------+-------------------+-------------------
+gid         | integer           | Unique ID
+name        | character varying | Road Name
+the_geom    | geometry          | Location Geometry (Linestring)
+
+The table definition for the bc_municipality table is:
+
+Column     | Type              | Description
+-----------+-------------------+-------------------
+gid        | integer           | Unique ID
+code       | integer           | Unique ID
+name       | character varying | City / Town Name
+the_geom   | geometry          | Location Geometry (Polygon)
+
+4.7.2.1. What is the total length of all roads, expressed in kilometers?
+4.7.2.2. How large is the city of Prince George, in hectares?
+4.7.2.3. What is the largest municipality in the province, by area?
+4.7.2.4. What is the length of roads fully contained within each municipality?
+4.7.2.5. Create a new table with all the roads within the city of Prince George.
+4.7.2.6. What is the length in kilometers of "Douglas St" in Victoria?
+4.7.2.7. What is the largest municipality polygon that has a hole?
+
+4.7.2.1.
+
+
+What is the total length of all roads, expressed in kilometers?
+
+
+You can answer this question with a very simple piece of SQL:
+
+SELECT sum(ST_Length(the_geom))/1000 AS km_roads FROM bc_roads;
+
+km_roads
+------------------
+70842.1243039643
+(1 row)
+
+4.7.2.2.
+
+
+How large is the city of Prince George, in hectares?
+
+
+This query combines an attribute condition (on the municipality name) with a spatial calculation (of the area):
+
+SELECT
+  ST_Area(the_geom)/10000 AS hectares
+FROM bc_municipality
+WHERE name = 'PRINCE GEORGE';
+
+hectares
+------------------
+32657.9103824927
+(1 row)
+
+4.7.2.3.
+
+
+What is the largest municipality in the province, by area?
+
+
+This query brings a spatial measurement into the query condition. There are several ways of approaching this problem, but the most efficient is below:
+
+SELECT
+  name,
+  ST_Area(the_geom)/10000 AS hectares
+FROM
+  bc_municipality
+ORDER BY hectares DESC
+LIMIT 1;
+
+name           | hectares
+---------------+-----------------
+TUMBLER RIDGE  | 155020.02556131
+(1 row)
+
+Note that in order to answer this query we have to calculate the area of every polygon. If we were doing this a lot it would make sense to add an area column to the table that we could separately index for performance. By ordering the results in a descending direction, and them using the PostgreSQL "LIMIT" command we can easily pick off the largest value without using an aggregate function like max().
+
+4.7.2.4.
+
+
+What is the length of roads fully contained within each municipality?
+
+
+This is an example of a "spatial join", because we are bringing together data from two tables (doing a join) but using a spatial interaction condition ("contained") as the join condition rather than the usual relational approach of joining on a common key:
+
+SELECT
+  m.name,
+  sum(ST_Length(r.the_geom))/1000 as roads_km
+FROM
+  bc_roads AS r,
+  bc_municipality AS m
+WHERE
+  ST_Contains(m.the_geom,r.the_geom)
+GROUP BY m.name
+ORDER BY roads_km;
+
+name                        | roads_km
+----------------------------+------------------
+SURREY                      | 1539.47553551242
+VANCOUVER                   | 1450.33093486576
+LANGLEY DISTRICT            | 833.793392535662
+BURNABY                     | 773.769091404338
+PRINCE GEORGE               | 694.37554369147
+...
+
+This query takes a while, because every road in the table is summarized into the final result (about 250K roads for our particular example table). For smaller overlays (several thousand records on several hundred) the response can be very fast.
+
+4.7.2.5.
+
+
+Create a new table with all the roads within the city of Prince George.
+
+
+This is an example of an "overlay", which takes in two tables and outputs a new table that consists of spatially clipped or cut resultants. Unlike the "spatial join" demonstrated above, this query actually creates new geometries. An overlay is like a turbo-charged spatial join, and is useful for more exact analysis work:
+
+CREATE TABLE pg_roads as
+SELECT
+  ST_Intersection(r.the_geom, m.the_geom) AS intersection_geom,
+  ST_Length(r.the_geom) AS rd_orig_length,
+  r.*
+FROM
+  bc_roads AS r,
+  bc_municipality AS m
+WHERE  m.name = 'PRINCE GEORGE' AND ST_Intersects(r.the_geom, m.the_geom);
+
+4.7.2.6.
+
+
+What is the length in kilometers of "Douglas St" in Victoria?
+
+
+SELECT
+  sum(ST_Length(r.the_geom))/1000 AS kilometers
+FROM
+  bc_roads r,
+  bc_municipality m
+WHERE  r.name = 'Douglas St' AND m.name = 'VICTORIA'
+	AND ST_Contains(m.the_geom, r.the_geom) ;
+
+kilometers
+------------------
+4.89151904172838
+(1 row)
+
+4.7.2.7.
+
+
+What is the largest municipality polygon that has a hole?
+
+
+SELECT gid, name, ST_Area(the_geom) AS area
+FROM bc_municipality
+WHERE ST_NRings(the_geom) > 1
+ORDER BY area DESC LIMIT 1;
+
+gid  | name         | area
+-----+--------------+------------------
+12   | SPALLUMCHEEN | 257374619.430216
+(1 row)
