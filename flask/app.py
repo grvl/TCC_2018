@@ -13,6 +13,9 @@ import branca.colormap as cm
 
 app = Flask(__name__)
 
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5000)
+
 @app.route('/coisas',  methods=['GET'])
 def endereco():
     return pesquisar_endereco(request.args.get('q'), int(request.args.get('dist')))
@@ -21,8 +24,11 @@ def endereco():
 def pessoa():
     return pesquisar_pessoa(request.args.get('q'), int(request.args.get('dist')))
 
+#------------------------------------------------------
+
 def pesquisar_endereco(endereco, distancia = 1):
-    dbname = 'ibge'
+    # Pesquisa por endereco é feita pelo banco
+    dbname = 'pesquisa'
     user = 'lima'
     pswd = '123456'
 
@@ -40,22 +46,26 @@ def pesquisar_endereco(endereco, distancia = 1):
 
     p = asShape({'type': 'Point','coordinates': [location.longitude,location.latitude]})  # GeoJsons inverts the pair order.
 
+
+    # Cria um círculo para enviar para o PostGIS
     n_points = 20
     d = distancia * 1000  # meters
     angles = np.linspace(0, 360, n_points)
     polygon = geog.propagate(p, angles, d)
     area = geojson.Feature(geometry = mapping(Polygon(polygon)))
 
-    circulo = {"type": "FeatureCollection", "features": [area]}
     zona = {"type": "FeatureCollection", "features": []}
 
     try:
         conn = psycopg2.connect("dbname='"+dbname+"' user='"+user+"' host='localhost' password='"+pswd+"'")
     except:
         return "Nao foi possivel completar a pesquisa. Erro na conexão com o banco."
-    for banco in [['bus_line', "route_id, accessibility_score"], ['cptm', "concat(etr_nome, ' - LINHA ', etr_linha) as name"], ['metro2', "concat(emt_nome, ' - LINHA ', emt_linha) as name"], ['prefeitura_venues', 'as_nome'], ['venues', "name, scores"], ['zona_azul', "local, tipo"]]: # [nome_do_banco, display_name_do_dado]
+
+    # [nome_do_banco, display_name_do_dado]
+    for banco in [['bus_line', "route_id, accessibility_score"], ['cptm', "concat(etr_nome, ' - LINHA ', etr_linha) as name"], ['metro2', "concat(emt_nome, ' - LINHA ', emt_linha) as name"], ['prefeitura_venues', 'as_nome'], ['venues', "name, scores"], ['zona_azul', "local, tipo"]]:
         try:
             cur = conn.cursor()
+            # Comando PostGIS para pesquisar por distância
             cur.execute("select ST_AsGeoJSON(wkb_geometry), "+ banco[1]+" from data."+banco[0]+" where  ST_Crosses(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry))) OR ST_Contains(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry)));")
             rows = cur.fetchall()
         except:
@@ -71,6 +81,7 @@ def pesquisar_endereco(endereco, distancia = 1):
 
     m = folium.Map([location.latitude,location.longitude], tiles='cartodbpositron', zoom_start=13 - distancia/5)
 
+    # Cria um círculo para visualização. Não usa o mesmo criado lá em cima simplesmente por que folium.Circle tinha funcionalidades melhores
     circle_group = FeatureGroup(name='Círculo')
     folium.Circle(
         location=[location.latitude, location.longitude],
@@ -86,6 +97,7 @@ def pesquisar_endereco(endereco, distancia = 1):
 
     circle_group.add_to(m)
 
+    # Funções para retornar o que exibir para cada tipo.
     def return_icon(icon_type):
         if icon_type == 'bus_line':
             return folium.Icon(color= 'black', icon='bus', prefix = 'fa')
@@ -124,6 +136,8 @@ def pesquisar_endereco(endereco, distancia = 1):
                 return 'Tipo: Vaga para pessoa com deficiência'
         return ""
 
+
+    # Feature groups para poder filtrar no mapa por tipo de dado
     groups = {'bus_line' : FeatureGroup(name = 'Ônibus'),'cptm': FeatureGroup(name = 'CPTM'), 'prefeitura_venues':FeatureGroup(name = 'Selo de acessibilidade'), 'venues':FeatureGroup(name = 'Guia de Rodas'), 'zona_azul':FeatureGroup(name = 'Zona Azul'), 'metro2':FeatureGroup(name = 'Metrô')}
 
     linear = cm.LinearColormap(['red', 'yellow', 'green'], vmin=0, vmax=1)
@@ -136,8 +150,11 @@ def pesquisar_endereco(endereco, distancia = 1):
             return '#777777'
 
     for item in zona['features']:
+            # If ponto
             if item['geometry']['type'] == 'Point':
                 f = folium.Marker([item['geometry']['coordinates'][1],item['geometry']['coordinates'][0]], icon=return_icon(item['properties']['type']))
+
+            # If linha de ônibus
             else:
                 line = list([[pair[1], pair[0]] for pair in item['geometry']['coordinates'] ])
                 f = folium.PolyLine( line, weight=5, color=my_color_function(float(item['properties']['other'])))
@@ -173,6 +190,7 @@ def pesquisar_pessoa(endereco, distancia = 1):
 
     p = asShape({'type': 'Point','coordinates': [location.longitude,location.latitude]})  # GeoJsons inverts the pair order.
 
+    # Circulo - Escolhi não desenhar ele no mapa por que ele ficava sendo desenhado em cima da divisão de áreas de ponderação, não deixando elas serem clicáveis
     n_points = 20
     d = distancia * 1000  # meters
     angles = np.linspace(0, 360, n_points)
@@ -225,7 +243,8 @@ def pesquisar_pessoa(endereco, distancia = 1):
                 'dashArray': '5, 5'
             }
         )
-        
+
+        # informações para exibir
         name = item['properties']['name']
         zone = item['properties']['zone']
         total = int(item['properties']['dados_ibge']['total_pessoas'] * item['properties']['percent'])
@@ -248,7 +267,3 @@ def pesquisar_pessoa(endereco, distancia = 1):
         gj.add_to(m)
 
     return render_template("pessoas.html", name = location.address, total = soma['total'], dif = soma['dificuldade_geral'], smped = soma['smped'], enx = soma['enxergar_geral'], ouv = soma['ouvir_geral'], cam = soma['caminhar_geral'], int = soma['intelectual_geral'], map = m._repr_html_())
-
-
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)

@@ -58,6 +58,6 @@ Os arquivos correspondentes a cada etapa estão numerados de acordo.
 
   - **Passo 1**: Carregamento dos dados do IBGE no R e exportação para um arquivo `.Rdata`.
   - **Passo 2**: Importação dos dados no Postgres.
-  - **Paso 3**: Importacão dos dados de SHP pro Postgres usando POSTGIS.
+  - **Passo 3**: Importacão dos dados de SHP pro Postgres usando POSTGIS.
   - **Passo 4**: Filtra e trata os dados.
   - **Passo 5**: Combina os dados espaciais com os dados amostrais.

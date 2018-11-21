@@ -21,13 +21,3 @@ for item in ibge_json['features']:
 
 out = open("shape2.json",'w', newline="")
 out.write(json.dumps(ibge_json))
-
-# f_freewheels = open(polygon_freewheels_file, 'r')
-# freewheels_json = json.load(f_freewheels)
-# freewheels_map = map(get_asShape, freewheels_json['features'])
-# for item in freewheels:
-#     print(item['polygon'].geom_type)
-
-# for polygon in ibge_map:
-#     ibge = ibge.union(polygon['polygon'])
-# http://toblerity.org/shapely/manual.html#polygons

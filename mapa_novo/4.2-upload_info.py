@@ -43,27 +43,3 @@ except:
 
 conn.commit()
 conn.close()
-
-# counter = 0
-# json_output = json.loads("""
-# {"type": "FeatureCollection", "features": []}
-# """)
-# features = []
-# for row in rows:
-#     distrito = int(row[1])
-#     # cor = "#ff0000"
-#     # if distrito == 50:
-#     #     cor = "#00ff00"
-#     # elif distrito == 51:
-#     #     cor = "#0000ff"
-#     # elif distrito == 52:
-#     #     cor = "#ffffff"
-#     dic = {"geometry": json.loads(row[-1]), "type": "Feature", "properties":{"geocodigo":row[0], "distrito":distrito,"area_apuracao":int(row[2]), "fill":cor}}
-#     counter += 1
-#     features.append(dic)
-# json_output["features"]=features
-# # json_output.append({ "features":[features]})
-#
-# print("Foram lidas " +str(counter)+ " linhas")
-# out = open(output_json_file,'w', newline="")
-# out.write(json.dumps(json_output))

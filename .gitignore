@@ -11,4 +11,6 @@ mapa_novo/\.ipynb_checkpoints/
 
 SMPED/BPC/\.ipynb_checkpoints/
 
-*.ipynb
+spatial_sql/
+
+mapa_novo/distritos-*\.json
