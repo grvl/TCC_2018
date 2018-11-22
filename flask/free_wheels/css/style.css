@@ -52,6 +52,18 @@ STEP 3
   width: 1.5em;
 }
 
+.score-general .icon-chair {
+  content: url('../img/icon-chair.png');
+  height: 1.0em;
+  width: 1.5em;
+}
+
+.score-cards .icon-chair {
+  content: url('../img/icon-chair.png');
+  height: 1em;
+  width: 1.5em;
+}
+
 .step-3 {
   background: lightgray;
 }

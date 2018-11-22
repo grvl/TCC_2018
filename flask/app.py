@@ -13,9 +13,6 @@ import branca.colormap as cm
 
 app = Flask(__name__)
 
-if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)
-
 @app.route('/coisas',  methods=['GET'])
 def endereco():
     return pesquisar_endereco(request.args.get('q'), int(request.args.get('dist')))
@@ -267,3 +264,7 @@ def pesquisar_pessoa(endereco, distancia = 1):
         gj.add_to(m)
 
     return render_template("pessoas.html", name = location.address, total = soma['total'], dif = soma['dificuldade_geral'], smped = soma['smped'], enx = soma['enxergar_geral'], ouv = soma['ouvir_geral'], cam = soma['caminhar_geral'], int = soma['intelectual_geral'], map = m._repr_html_())
+
+# ----------------------------------------------------
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=5000)
