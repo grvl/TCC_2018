@@ -8,6 +8,7 @@
   - Crie um novo banco de dados para os dados para pesquisa (recomendado).
 
 ## Flask
+0. Instalar os módulos geopy, psycopg2-binary, geojson, numpy, geog, folium, shapely
 1. Instalar PostGIS no banco de dados PostgreSQL: https://postgis.net/docs/postgis_installation.html#install_short_version
   * Não há necessidade de sfcgal support, tiger geocoder ou pcre
 2. Rodar o arquivo db/1.upload_data.sh

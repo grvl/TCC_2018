@@ -167,7 +167,8 @@ def pesquisar_endereco(endereco, distancia = 1):
     return render_template("coisas.html", name = location.address, map = m._repr_html_())
 
 def pesquisar_pessoa(endereco, distancia = 1):
-    arquiv = "free_wheels/js/data/distritos-ranked-ibge.json"
+    arquiv = "js/data/distritos-ranked-ibge.json"
+    #arquiv = "/home/interscity/interscity.org/apps/freewheels-teste/js/data/distritos-ranked-ibge.json"
 
     if distancia > 10:
         distancia = 10;
