@@ -63,7 +63,7 @@ def pesquisar_endereco(endereco, distancia = 1):
         try:
             cur = conn.cursor()
             # Comando PostGIS para pesquisar por distância
-            cur.execute("select ST_AsGeoJSON(wkb_geometry), "+ banco[1]+" from data."+banco[0]+" where  ST_Crosses(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry))) OR ST_Contains(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry)));")
+            cur.execute("select ST_AsGeoJSON(wkb_geometry), "+ banco[1]+" from "+banco[0]+" where  ST_Crosses(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry))) OR ST_Contains(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry)));")
             rows = cur.fetchall()
         except:
             return "Nao foi possivel completar a pesquisa. Erro na pesquisa do banco."
