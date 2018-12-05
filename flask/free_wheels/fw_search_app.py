@@ -25,8 +25,8 @@ def pessoa():
 
 def pesquisar_endereco(endereco, distancia = 1):
     # Pesquisa por endereco é feita pelo banco
-    dbname = 'pesquisa'
-    user = 'lima'
+    dbname = 'freewheels'
+    user = 'freewheels'
     pswd = '123456'
 
     if distancia > 10:
@@ -54,7 +54,7 @@ def pesquisar_endereco(endereco, distancia = 1):
     zona = {"type": "FeatureCollection", "features": []}
 
     try:
-        conn = psycopg2.connect("dbname='"+dbname+"' user='"+user+"' host='localhost' password='"+pswd+"'")
+        conn = psycopg2.connect("dbname='"+dbname+"' user='"+user+"' host='eclipse.ime.usp.br' password='"+pswd+"'")
     except:
         return "Nao foi possivel completar a pesquisa. Erro na conexão com o banco."
 
