@@ -6,6 +6,13 @@
       <hr>
       <h3>{{ name }}</h3>
       <hr>
+      {% if addresses %}
+      <h4> Ou você quis dizer algum desses endereços: </h4>
+      {% for add in addresses %}
+      <a href = '{{add.link}}'>{{add.address}}</a><br>
+      {% endfor %}
+      <hr>
+      {% endif %}
       <style type="text/css">
         .tg  {border-collapse:collapse;border-spacing:0;border:none;border-color:#999;}
         .tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;border-color:#999;color:#444;background-color:#F7FDFA;}

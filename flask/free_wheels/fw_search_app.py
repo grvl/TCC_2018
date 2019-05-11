@@ -53,9 +53,13 @@ def pesquisar_endereco(endereco, distancia = 1):
 
     valid_locations = []
     for loc in locations:
-        if 'SP, Microrregião de São Paulo' in loc.address:
+        print(loc)
+        if 'SP' in loc.address:
             # print(loc.address + ' ' + str(loc.latitude) + ' ' + str(loc.longitude))
             valid_locations.append(loc)
+
+    if len(valid_locations) == 0:
+        return "Não foi possível encontrar o endereço."
 
     location = valid_locations.pop(0)
 
@@ -218,9 +222,13 @@ def pesquisar_pessoa(endereco, distancia = 1):
 
     valid_locations = []
     for loc in locations:
-        if 'SP, Microrregião de São Paulo' in loc.address:
+        if 'SP' in loc.address:
             # print(loc.address + ' ' + str(loc.latitude) + ' ' + str(loc.longitude))
             valid_locations.append(loc)
+
+    if len(valid_locations) == 0:
+        return "Não foi possível encontrar o endereço."
+
     location = valid_locations.pop(0)
 
 
