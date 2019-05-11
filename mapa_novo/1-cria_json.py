@@ -36,7 +36,7 @@ json_output = json.loads("""
 """)
 features = []
 for row in rows:
-    distrito = int(row[1
+    distrito = int(row[1])
     dic = {"geometry": json.loads(row[-1]),
             "type": "Feature",
             "properties":{"geocodigo":row[0],

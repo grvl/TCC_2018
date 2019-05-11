@@ -6,6 +6,13 @@
       <hr>
       <h3>{{ name }}</h3>
       <hr>
+      {% if addresses %}
+      <h4> Ou você quis dizer algum desses endereços: </h4>
+      {% for add in addresses %}
+      <a href = '{{add.link}}'>{{add.address}}</a><br>
+      {% endfor %}
+      <hr>
+      {% endif %}
       <style type="text/css">
       .tg  {border-collapse:collapse;border-spacing:0;border-width:1px;border-style:solid;border-color:#999;}
       .tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:0px;overflow:hidden;word-break:normal;border-color:#999;color:#444;background-color:#F7FDFA;}
@@ -27,7 +34,7 @@
         </tr>
         <tr>
           <td class="tg-baqh"><img src="static/guiaderodas.png"></td>
-          <td class="tg-baqh"><span style = "font-weight:bold;color:#34cdf9;font-size:18px;text-align:center;vertical-align:top">Guiaderodas</span><br><h5>Cada pin representa um estabelecimento com nota no Guiaderodas. Clique no pin para ver seu nome e sua nota.</h5></td>
+          <td class="tg-baqh"><span style = "font-weight:bold;color:#34cdf9;font-size:18px;text-align:center;vertical-align:top">Guiaderodas</span><br><h5>Cada pin com uma estrela representa um estabelecimento com nota no Guiaderodas. A cor do pin representa a nota do estabelecimento, sendo vermelho estabelecimentos com menos de 1.7, laranja estabelecimentos entre 1.7 e 3.6, e verde estabelecimentos com 3.6 ou mais. Clique no pin para ver seu nome e sua nota.</h5></td>
           <td class="tg-baqh"><img src="static/subway.png"></td>
           <td class="tg-baqh"><span style = "font-weight:bold;color:#34cdf9;font-size:18px;text-align:center;vertical-align:top">Metrô</span><br><h5>Cada pin representa uma estação de metrô acessível. Clique no pin para ver seu nome.</h5></td>
           <td class="tg-baqh"><img src="static/train.png"></td>

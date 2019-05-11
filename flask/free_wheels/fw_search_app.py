@@ -23,23 +23,41 @@ def pessoa():
 
 #------------------------------------------------------
 
+def get_links (lista, dist):
+    new_list = []
+    for item in lista:
+        aux_dict = {}
+        aux_dict['address'] = item.address
+        aux_dict['link'] = "/coisas?q="+item.address.replace(",", "%2C").replace(" ", "+")+"&dist="+str(dist)
+        new_list.append(aux_dict)
+    return new_list
+
 def pesquisar_endereco(endereco, distancia = 1):
     # Pesquisa por endereco é feita pelo banco
-    dbname = 'freewheels'
-    user = 'freewheels'
+    dbname = 'pesquisa'
+    user = 'lima'
     pswd = '123456'
 
-    if distancia > 10:
-        distancia = 10;
+    if distancia > 5:
+        distancia = 5;
 
     geolocator = Nominatim(user_agent="usp_TCC", timeout = 5)
     try:
-        location = geolocator.geocode(endereco)
-        if location is None:
+        locations = geolocator.geocode(endereco, exactly_one = False)
+        if locations is None:
             return "Endereço não encontrado."
 
-    except:
+    except Exception as e:
+        print(e)
         return "Nao foi possivel completar a pesquisa. Erro na pesquisa de endereço."
+
+    valid_locations = []
+    for loc in locations:
+        if 'SP, Microrregião de São Paulo' in loc.address:
+            # print(loc.address + ' ' + str(loc.latitude) + ' ' + str(loc.longitude))
+            valid_locations.append(loc)
+
+    location = valid_locations.pop(0)
 
     p = asShape({'type': 'Point','coordinates': [location.longitude,location.latitude]})  # GeoJsons inverts the pair order.
 
@@ -54,8 +72,10 @@ def pesquisar_endereco(endereco, distancia = 1):
     zona = {"type": "FeatureCollection", "features": []}
 
     try:
-        conn = psycopg2.connect("dbname='"+dbname+"' user='"+user+"' host='eclipse.ime.usp.br' password='"+pswd+"'")
-    except:
+        # conn = psycopg2.connect("dbname='"+dbname+"' user='"+user+"' host='eclipse.ime.usp.br' password='"+pswd+"'")
+        conn = psycopg2.connect("dbname='"+dbname+"' user='"+user+"' host='127.0.0.1' password='"+pswd+"'")
+    except Exception as e:
+        print(e)
         return "Nao foi possivel completar a pesquisa. Erro na conexão com o banco."
 
     # [nome_do_banco, display_name_do_dado]
@@ -65,7 +85,8 @@ def pesquisar_endereco(endereco, distancia = 1):
             # Comando PostGIS para pesquisar por distância
             cur.execute("select ST_AsGeoJSON(wkb_geometry), "+ banco[1]+" from "+banco[0]+" where  ST_Crosses(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry))) OR ST_Contains(ST_GeomFromGeoJSON('"+str(area['geometry'])+"'), ST_GeomFromGeoJSON(ST_AsGeoJSON(wkb_geometry)));")
             rows = cur.fetchall()
-        except:
+        except Exception as e:
+            print(e)
             return "Nao foi possivel completar a pesquisa. Erro na pesquisa do banco."
 
         for row in rows:
@@ -95,7 +116,9 @@ def pesquisar_endereco(endereco, distancia = 1):
     circle_group.add_to(m)
 
     # Funções para retornar o que exibir para cada tipo.
-    def return_icon(icon_type):
+    def return_icon(item):
+        icon_type = item['properties']['type']
+
         if icon_type == 'bus_line':
             return folium.Icon(color= 'black', icon='bus', prefix = 'fa')
         elif icon_type == 'cptm':
@@ -103,7 +126,13 @@ def pesquisar_endereco(endereco, distancia = 1):
         elif icon_type == 'prefeitura_venues':
             return folium.Icon(color = 'green', icon='universal-access', prefix = 'fa')
         elif icon_type == 'venues':
-            return folium.Icon(color = 'orange', icon='star-half-o', prefix = 'fa')
+            nota = float(item['properties']['other'][10:13])
+            cor = 'green'
+            if nota < 1.7:
+                cor = 'red'
+            elif nota < 3.4:
+                cor = 'orange'
+            return folium.Icon(color = cor, icon='star-half-o', prefix = 'fa')
         elif icon_type == 'zona_azul':
             return folium.Icon(color = 'blue', icon='car', prefix = 'fa')
         elif icon_type == 'metro2':
@@ -149,7 +178,7 @@ def pesquisar_endereco(endereco, distancia = 1):
     for item in zona['features']:
             # If ponto
             if item['geometry']['type'] == 'Point':
-                f = folium.Marker([item['geometry']['coordinates'][1],item['geometry']['coordinates'][0]], icon=return_icon(item['properties']['type']))
+                f = folium.Marker([item['geometry']['coordinates'][1],item['geometry']['coordinates'][0]], icon=return_icon(item))
 
             # If linha de ônibus
             else:
@@ -164,14 +193,14 @@ def pesquisar_endereco(endereco, distancia = 1):
         groups[group].add_to(m)
 
     LayerControl().add_to(m)
-    return render_template("coisas.html", name = location.address, map = m._repr_html_())
+    return render_template("coisas.html", name = location.address, map = m._repr_html_(), addresses = get_links(valid_locations, distancia))
 
 def pesquisar_pessoa(endereco, distancia = 1):
     arquiv = "js/data/distritos-ranked-ibge.json"
     #arquiv = "/home/interscity/interscity.org/apps/freewheels-teste/js/data/distritos-ranked-ibge.json"
 
-    if distancia > 10:
-        distancia = 10;
+    if distancia > 5:
+        distancia = 5;
 
     f = open(arquiv, 'r')
     mapa = json.load(f)
@@ -179,12 +208,21 @@ def pesquisar_pessoa(endereco, distancia = 1):
 
     geolocator = Nominatim(user_agent="usp_TCC", timeout = 5)
     try:
-        location = geolocator.geocode(endereco)
-        if location is None:
+        locations = geolocator.geocode(endereco, exactly_one = False)
+        if locations is None:
             return "Endereço não encontrado."
 
-    except:
+    except Exception as e:
+        print(e)
         return "Nao foi possivel completar a pesquisa. Erro na pesquisa de endereço."
+
+    valid_locations = []
+    for loc in locations:
+        if 'SP, Microrregião de São Paulo' in loc.address:
+            # print(loc.address + ' ' + str(loc.latitude) + ' ' + str(loc.longitude))
+            valid_locations.append(loc)
+    location = valid_locations.pop(0)
+
 
     p = asShape({'type': 'Point','coordinates': [location.longitude,location.latitude]})  # GeoJsons inverts the pair order.
 
@@ -264,7 +302,7 @@ def pesquisar_pessoa(endereco, distancia = 1):
         gj.add_child(folium.Popup(html))
         gj.add_to(m)
 
-    return render_template("pessoas.html", name = location.address, total = soma['total'], dif = soma['dificuldade_geral'], smped = soma['smped'], enx = soma['enxergar_geral'], ouv = soma['ouvir_geral'], cam = soma['caminhar_geral'], int = soma['intelectual_geral'], map = m._repr_html_())
+    return render_template("pessoas.html", name = location.address, total = soma['total'], dif = soma['dificuldade_geral'], smped = soma['smped'], enx = soma['enxergar_geral'], ouv = soma['ouvir_geral'], cam = soma['caminhar_geral'], int = soma['intelectual_geral'], map = m._repr_html_(), addresses = get_links(valid_locations, distancia))
 
 # ----------------------------------------------------
 if __name__ == '__main__':

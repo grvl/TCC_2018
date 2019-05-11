@@ -105,9 +105,12 @@ for key in scores:
 for i in range(0, len(ibge_map)):
     for key in ibge_json['features'][i]['properties']['scores']:
         ibge_json['features'][i]['properties']['scores'][key]['ranking'] = scores[key].index(ibge_json['features'][i]['properties']['scores'][key]['value']) + 1
+        j = -1
+        while scores[key][j] <= 0:
+            j -= 1
         linear = cm.LinearColormap(
-            ['green', 'yellow', 'red'],
-            vmin=0, vmax=scores[key][0]
+            ['#adadff', '#0000ff', '#000054'],
+            vmin=scores[key][j], vmax=scores[key][0]
         )
         ibge_json['features'][i]['properties']['scores'][key]['color'] = color_function(linear, ibge_json['features'][i]['properties']['scores'][key]['value'])
 
